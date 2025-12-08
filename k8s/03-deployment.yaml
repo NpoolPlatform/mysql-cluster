@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-service
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-service
+  template:
+    metadata:
+      labels:
+        app: mysql-service
+    spec:
+      containers:
+      - name: mysql-service
+        image: docker.io/npool/mysql:8.4.7.1
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - |
+          /usr/local/bin/docker-entrypoint.sh mysqld --mysql-native-password=ON
+        env:
+        - name: ENV_ENVIRONMENT_TARGET
+          valueFrom:
+            configMapKeyRef:
+              name: system-environment
+              key: environment.target
+        - name: ENV_CONSUL_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: system-environment
+              key: environment.consul_host
+        - name: ENV_CONSUL_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: system-environment
+              key: environment.consul_port
+        - name: ENV_PMM_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pmm-secret
+              key: PMM_ADMIN_PASSWORD
+        - name: ENV_CLUSTER_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_USER
+        - name: MYSQL_ROOT_HOST
+          value: "%"
+        volumeMounts:
+        - name: mysql
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: kube-system
+spec:
+  ports:
+    - name: mysql-service
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: mysql-service
