@@ -20,12 +20,12 @@ pipeline {
       steps {
         sh 'mkdir -p .docker-tmp; cp /usr/bin/consul .docker-tmp'
         sh(returnStdout: true, script: '''
-          images=`docker images | grep entropypool | grep mysql | awk '{ print $3 }'`
+          images=`docker images | grep npool | grep mysql | awk '{ print $3 }'`
           for image in $images; do
             docker rmi $image -f
           done
         '''.stripIndent())
-        sh 'docker build -t $DOCKER_REGISTRY/entropypool/mysql:5.7.35.18 .'
+        sh 'docker build -t docker.io/npool/mysql:8.4.7.1 .'
       }
     }
 
@@ -37,7 +37,7 @@ pipeline {
         sh(returnStdout: true, script: '''
           set +e
           while true; do
-            docker push $DOCKER_REGISTRY/entropypool/mysql:5.7.35.18
+            docker push docker.io/npool/mysql:8.4.7.1
             if [ $? -eq 0 ]; then
               break
             fi
