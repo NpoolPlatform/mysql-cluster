@@ -50,23 +50,18 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_ROOT_PASSWORD
+              name: mysql-password-secret
+              key: rootpassword
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_PASSWORD
-        - name: MYSQL_DATABASE
-          valueFrom:
-            configMapKeyRef:
-              name: mysql-config
-              key: MYSQL_DATABASE
+              name: mysql-password-secret
+              key: rootpassword
         - name: MYSQL_USER
           valueFrom:
-            configMapKeyRef:
-              name: mysql-config
-              key: MYSQL_USER
+            secretKeyRef:
+              name: mysql-password-secret
+              key: username
         - name: MYSQL_ROOT_HOST
           value: "%"
         volumeMounts:
@@ -76,4 +71,7 @@ spec:
       - name: mysql
         persistentVolumeClaim:
           claimName: mysql-pvc
+      - name: config-map
+        configMap:
+          name: mysql-configmap
 
