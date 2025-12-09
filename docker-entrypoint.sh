@@ -12,7 +12,6 @@ function mysql_running() {
 }
 
 function get_read_only() {
-  # MySQL 8: read_only & super_read_only 都会影响写入
   ro=$($mysql_exec -e "SELECT IF(@@global.super_read_only = 1 OR @@global.read_only = 1, 1, 0);")
   [[ "$ro" =~ ^[01]$ ]] || echo "-1"
   echo "$ro"
@@ -36,13 +35,11 @@ function register_service() {
       continue
     fi
 
-    # 如果状态无变化
     if [ "$last_state" = "$ro" ]; then
       sleep 2
       continue
     fi
 
-    # 状态发生变化，重新注册 Consul
     if [ "$ro" = "1" ]; then
       my_id="${my_hostname}.mysql-ro.${ENV_CLUSTER_NAMESPACE}.svc.cluster.local"
       my_name="mysql-ro.npool.top"
@@ -74,6 +71,14 @@ function register_service() {
 function pmm_admin_add_mysql() {
   while true; do
     consul_pmm_service=$(curl -s "http://${CONSUL_HTTP_ADDR}/v1/agent/service/pmm.${ENV_CLUSTER_NAMESPACE}.svc.cluster.local")
+
+    # 校验是否为合法 JSON
+    if ! echo "$consul_pmm_service" | jq empty >/dev/null 2>&1; then
+      echo "Invalid or empty JSON from Consul, retrying..."
+      sleep 5
+      continue
+    fi
+
     pmm_service=$(echo "$consul_pmm_service" | jq -r '.Service')
     pmm_port=$(echo "$consul_pmm_service" | jq -r '.Port')
 
@@ -91,7 +96,6 @@ function pmm_admin_add_mysql() {
         --config-file=/usr/local/percona/pmm2/config/pmm-agent.yaml \
         --server-insecure-tls \
         --server-address="$pmm_service:$pmm_port" >> /var/log/pmm-agent.log 2>&1 &
-
     else
       echo "PMM server not registered yet"
       sleep 10
@@ -101,7 +105,7 @@ function pmm_admin_add_mysql() {
     break
   done
 
-  pmm-admin status
+  pmm-admin status >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     while true; do
       if mysql_running; then
@@ -122,11 +126,8 @@ function pmm_admin_add_mysql() {
 function set_sql_mode() {
   while true; do
     if mysql_running; then
-      # MySQL 8: 通过 JSON SEARCH 替换 sql_mode 更安全
       current_mode=$($mysql_exec -e "SELECT @@global.sql_mode;")
-
       new_mode=$(echo "$current_mode" | sed 's/ONLY_FULL_GROUP_BY//g' | sed 's/,,/,/g' | sed 's/^,//' | sed 's/,$//')
-
       $mysql_exec -e "SET GLOBAL sql_mode='$new_mode';"
       echo "SQL_MODE updated: $new_mode"
       break
@@ -136,6 +137,8 @@ function set_sql_mode() {
     fi
   done
 }
+
+# 跳过 chown，MySQL PVC 已设置 MYSQL_INITDB_SKIP_CHOWN=true
 
 register_service &
 pmm_admin_add_mysql &
