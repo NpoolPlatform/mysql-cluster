@@ -74,7 +74,7 @@ function pmm_admin_add_mysql() {
 
     # 校验是否为合法 JSON
     if ! echo "$consul_pmm_service" | jq empty >/dev/null 2>&1; then
-      echo "Invalid or empty JSON from Consul, retrying..."
+      echo "Invalid or empty JSON from Consul: $consul_pmm_service, retrying..."
       sleep 5
       continue
     fi
