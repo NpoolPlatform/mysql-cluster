@@ -15,7 +15,7 @@ RUN apt-get install debian-archive-keyring -y
 RUN apt-get update -y
 RUN apt --fix-broken install -y
 RUN apt-get update -y
-RUN apt-get install curl net-tools lsb-release apt-utils jq -y
+RUN apt-get install curl net-tools lsb-release apt-utils jq iproute2 -y
 
 RUN all_proxy=$all_proxy https_proxy=$https_proxy http_proxy=$http_proxy curl -o /usr/local/bin/pmm2-client_2.37.0-6.buster_amd64.deb https://downloads.percona.com/downloads/pmm2/2.37.0/binary/debian/buster/x86_64/pmm2-client_2.37.0-6.buster_amd64.deb
 RUN all_proxy=$all_proxy https_proxy=$https_proxy http_proxy=$http_proxy curl -o /usr/local/bin/percona-release_latest.$(lsb_release -sc)_all.deb https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
