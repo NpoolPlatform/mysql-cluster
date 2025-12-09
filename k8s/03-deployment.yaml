@@ -77,16 +77,3 @@ spec:
         persistentVolumeClaim:
           claimName: mysql-pvc
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-  namespace: kube-system
-spec:
-  ports:
-    - name: mysql
-      port: 3306
-      targetPort: 3306
-  selector:
-    app: mysql
