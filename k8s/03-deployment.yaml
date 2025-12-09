@@ -21,7 +21,7 @@ spec:
         - /bin/sh
         - -c
         - |
-          /usr/local/bin/docker-entrypoint.sh mysqld --mysql-native-password=ON
+          /usr/local/bin/docker-entrypoint.sh mysqld
         env:
         - name: ENV_ENVIRONMENT_TARGET
           valueFrom:
@@ -69,6 +69,10 @@ spec:
         volumeMounts:
         - name: mysql
           mountPath: /var/lib/mysql
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       volumes:
       - name: mysql
         persistentVolumeClaim:

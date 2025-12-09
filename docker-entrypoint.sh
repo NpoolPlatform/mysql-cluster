@@ -5,7 +5,7 @@ my_ip=$(hostname -i)
 export CONSUL_HTTP_ADDR=${ENV_CONSUL_HOST}:${ENV_CONSUL_PORT}
 
 # MySQL 8: 减少 mysql CLI 噪音
-mysql_exec="MYSQL_PWD=$MYSQL_ROOT_PASSWORD mysql -uroot -N -s"
+mysql_exec="mysql -uroot -p$MYSQL_ROOT_PASSWORD -N -s"
 
 function mysql_running() {
   ss -lnt | grep -q ":3306 "
