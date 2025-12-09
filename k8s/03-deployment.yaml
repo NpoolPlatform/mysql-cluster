@@ -64,6 +64,8 @@ spec:
               key: username
         - name: MYSQL_ROOT_HOST
           value: "%"
+        - name: MYSQL_INITDB_SKIP_CHOWN
+          value: "true"
         volumeMounts:
         - name: mysql
           mountPath: /var/lib/mysql
